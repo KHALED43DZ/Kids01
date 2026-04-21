@@ -1,0 +1,156 @@
+{
+  "description": "مصنع الاختبارات الذكية - Flowise Flow Template",
+  "nodes": [
+    {
+      "id": "node_http_input",
+      "type": "httpInput",
+      "label": "HTTP Webhook Input",
+      "description": "يستقبل موضوع المسابقة من التطبيق",
+      "config": {
+        "method": "POST",
+        "path": "/generate-quiz",
+        "expectedBody": {
+          "topic": "string",
+          "questionCount": "number",
+          "ageGroup": "string",
+          "imageStyle": "string",
+          "dialect": "string"
+        }
+      }
+    },
+    {
+      "id": "node_llm_questions",
+      "type": "chatOpenAI",
+      "label": "GPT-4 - توليد الأسئلة",
+      "description": "يولد الأسئلة والخيارات والإجابات",
+      "config": {
+        "model": "gpt-4o",
+        "temperature": 0.7,
+        "systemMessage": "أنت خبير في إنشاء محتوى تعليمي للأطفال. يجب أن ترد دائماً بـ JSON نقي فقط.",
+        "promptTemplate": "أنشئ {{questionCount}} أسئلة تعليمية ممتعة عن موضوع: '{{topic}}' مناسبة لأطفال عمر {{ageGroup}} سنوات. أرجع JSON فقط بالهيكل المحدد."
+      },
+      "inputs": ["node_http_input"]
+    },
+    {
+      "id": "node_parallel_split",
+      "type": "parallelNode",
+      "label": "تشغيل متوازي",
+      "description": "تشغيل توليد الصور والصوت والسكريبت بالتوازي",
+      "branches": ["images", "audio", "script"],
+      "inputs": ["node_llm_questions"]
+    },
+    {
+      "id": "node_image_prompts",
+      "type": "chatOpenAI",
+      "label": "GPT-4 - بروبتات Pixar",
+      "description": "يحسّن بروبتات الصور لستايل Pixar",
+      "config": {
+        "model": "gpt-4o",
+        "temperature": 0.8,
+        "systemMessage": "أنت متخصص في كتابة image prompts بستايل Pixar 3D. اكتب prompts بالإنجليزية فقط.",
+        "promptTemplate": "حسّن هذه البروبتات لصور Pixar 3D لأطفال: {{imagePrompts}}"
+      },
+      "inputs": ["node_parallel_split.images"]
+    },
+    {
+      "id": "node_dalle",
+      "type": "dalleImageGeneration",
+      "label": "DALL-E 3 - توليد الصور",
+      "description": "يولد صور Pixar عالية الجودة",
+      "config": {
+        "model": "dall-e-3",
+        "size": "1024x1024",
+        "quality": "standard",
+        "n": 1
+      },
+      "inputs": ["node_image_prompts"]
+    },
+    {
+      "id": "node_script",
+      "type": "chatOpenAI",
+      "label": "GPT-4 - السكريبت الصوتي",
+      "description": "يكتب سكريبت التعليق الصوتي",
+      "config": {
+        "model": "gpt-4o",
+        "temperature": 0.9,
+        "systemMessage": "أنت كاتب محتوى متخصص في برامج الأطفال العربية. اكتب بلهجة عربية بيضاء بسيطة وممتعة.",
+        "promptTemplate": "اكتب سكريبت تعليق صوتي مشوق لمسابقة عن '{{topic}}' تحتوي على {{questionCount}} أسئلة. اللهجة: {{dialect}}"
+      },
+      "inputs": ["node_parallel_split.script"]
+    },
+    {
+      "id": "node_tts",
+      "type": "elevenLabsTTS",
+      "label": "ElevenLabs - تحويل لصوت",
+      "description": "يحول السكريبت لملف صوتي",
+      "config": {
+        "voiceId": "21m00Tcm4TlvDq8ikWAM",
+        "modelId": "eleven_multilingual_v2",
+        "voiceSettings": {
+          "stability": 0.5,
+          "similarityBoost": 0.75,
+          "style": 0.3,
+          "useSpeakerBoost": true
+        },
+        "outputFormat": "mp3_44100_128"
+      },
+      "inputs": ["node_parallel_split.audio", "node_script"]
+    },
+    {
+      "id": "node_merge",
+      "type": "mergeNode",
+      "label": "دمج النتائج",
+      "description": "يجمع الأسئلة والصور والصوت",
+      "inputs": ["node_llm_questions", "node_dalle", "node_tts"]
+    },
+    {
+      "id": "node_csv_builder",
+      "type": "codeNode",
+      "label": "بناء ملف CSV لـ CapCut",
+      "description": "ينشئ ملف CSV متوافق مع CapCut Batch Edit",
+      "config": {
+        "language": "javascript",
+        "code": "function buildCapCutCSV(data) {\n  const headers = ['رقم_السؤال', 'السؤال', 'الخيار_أ', 'الخيار_ب', 'الخيار_ج', 'الخيار_د', 'الإجابة', 'ملف_الصورة', 'ملف_الصوت', 'بروبت_الصورة'];\n  const rows = data.questions.map((q, i) => [\n    i + 1,\n    q.question,\n    q.choices.a, q.choices.b, q.choices.c, q.choices.d,\n    q.choices[q.correct],\n    `q${i+1}_image.png`,\n    `q${i+1}_audio.mp3`,\n    q.imagePrompt\n  ]);\n  return [headers, ...rows].map(r => r.join(',')).join('\\n');\n}"
+      },
+      "inputs": ["node_merge"]
+    },
+    {
+      "id": "node_output",
+      "type": "httpOutput",
+      "label": "إرسال النتائج",
+      "description": "إرسال JSON كامل مع رابط CSV",
+      "config": {
+        "responseFormat": {
+          "success": true,
+          "topic": "{{topic}}",
+          "questions": "{{questions}}",
+          "images": "{{imageUrls}}",
+          "audioUrl": "{{audioUrl}}",
+          "csvData": "{{csvData}}",
+          "script": "{{fullScript}}"
+        }
+      },
+      "inputs": ["node_csv_builder"]
+    }
+  ],
+  "edges": [
+    {"from": "node_http_input", "to": "node_llm_questions"},
+    {"from": "node_llm_questions", "to": "node_parallel_split"},
+    {"from": "node_parallel_split", "to": "node_image_prompts", "branch": "images"},
+    {"from": "node_parallel_split", "to": "node_script", "branch": "script"},
+    {"from": "node_parallel_split", "to": "node_tts", "branch": "audio"},
+    {"from": "node_image_prompts", "to": "node_dalle"},
+    {"from": "node_script", "to": "node_tts"},
+    {"from": "node_dalle", "to": "node_merge"},
+    {"from": "node_tts", "to": "node_merge"},
+    {"from": "node_llm_questions", "to": "node_merge"},
+    {"from": "node_merge", "to": "node_csv_builder"},
+    {"from": "node_csv_builder", "to": "node_output"}
+  ],
+  "metadata": {
+    "name": "Quiz Factory Flow",
+    "version": "1.0",
+    "createdAt": "2026-04-21",
+    "description": "Flow كامل لأتمتة إنتاج مسابقات الأطفال"
+  }
+}
