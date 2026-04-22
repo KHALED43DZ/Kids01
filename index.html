@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#FF6B35">
 <meta name="description" content="أتمتة إنتاج موارد فيديوهات اختبارات الذكاء للأطفال">
 <link rel="manifest" href="manifest.json">
-<title>🧠 مصنع الاختبارات الذكية v2</title>
+<title>🧠 مصنع الاختبارات الذكية v3 — Gemini</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Baloo+2:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -861,13 +861,13 @@
     <h1>مصنع الاختبارات الذكية</h1>
     <p>أتمتة كاملة لإنتاج فيديوهات اختبارات الأطفال • مدعوم بالذكاء الاصطناعي</p>
     <div style="margin-top:8px;background:rgba(46,204,113,0.15);border:1px solid rgba(46,204,113,0.4);border-radius:10px;padding:8px 16px;font-size:12px;color:var(--green);font-weight:700;display:inline-block">
-      ✅ الإصدار 2.0 — يعمل بدون مفاتيح API تلقائياً
+      ✅ الإصدار 3.0 — مدعوم بـ Google Gemini
     </div>
     <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-      <span class="chip chip-orange">🤖 GPT-4</span>
-      <span class="chip chip-teal">🎤 ElevenLabs</span>
-      <span class="chip chip-purple">🎨 DALL-E 3</span>
-      <span class="chip chip-orange">📱 PWA Offline</span>
+      <span class="chip chip-teal">🤖 Gemini 2.0 Flash</span>
+      <span class="chip chip-purple">🎨 Imagen 3</span>
+      <span class="chip chip-orange">🎤 ElevenLabs</span>
+      <span class="chip chip-teal">📱 PWA Offline</span>
     </div>
   </div>
 
@@ -1009,7 +1009,7 @@
         </div>
         <div class="step-item pending" id="step4">
           <span class="step-icon">🖼️</span>
-          <span class="step-text">توليد الصور عبر DALL-E</span>
+          <span class="step-text">توليد الصور عبر Imagen 3 (Gemini)</span>
           <span class="step-check">⏳</span>
         </div>
         <div class="step-item pending" id="step5">
@@ -1030,34 +1030,38 @@
   <!-- ===================== TAB 2: API KEYS ===================== -->
   <div id="tab-keys" class="tab-panel">
 
-    <div class="card">
-      <div class="card-title">🔑 إدارة مفاتيح OpenAI</div>
-      <div style="background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.7">
-        ✅ <strong style="color:var(--green)">التطبيق يعمل بدون مفاتيح!</strong> عند غيابها يتم التوليد محلياً تلقائياً.<br>
-        🚀 أضف مفتاح OpenAI للحصول على أسئلة أذكى عبر GPT-4o mini.
-      </div>
-      <div class="section-label">يتبدّل تلقائياً عند وصول أي مفتاح لحد الاستهلاك</div>
-      <div id="openaiKeys">
-        <!-- Keys inserted by JS -->
-      </div>
-      <button class="btn btn-secondary" onclick="addKey('openai')" style="margin-top:8px">
-        ➕ إضافة مفتاح OpenAI
-      </button>
-    </div>
-
-    <div class="card">
-      <div class="card-title">🔑 إدارة مفاتيح ElevenLabs</div>
-      <div id="elevenKeys"></div>
-      <button class="btn btn-secondary" onclick="addKey('eleven')" style="margin-top:8px">
-        ➕ إضافة مفتاح ElevenLabs
-      </button>
-    </div>
-
-    <div class="card">
+    <div class="card" style="border-color:rgba(78,205,196,0.4)">
       <div class="card-title">🔑 إدارة مفاتيح Google Gemini</div>
+      <div style="background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.8">
+        ✅ <strong style="color:var(--green)">التطبيق يعمل بدون مفتاح!</strong> التوليد المحلي يعمل تلقائياً.<br>
+        🚀 أضف مفتاح Gemini للحصول على أسئلة ذكية حقيقية عبر <strong>Gemini 2.0 Flash</strong>.<br>
+        🎨 ويدعم أيضاً توليد الصور عبر <strong>Imagen 3</strong>.
+      </div>
+      <div style="background:rgba(15,52,96,0.6);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px">
+        <div style="font-weight:800;color:var(--accent);margin-bottom:8px">📋 كيف تحصل على مفتاح مجاني؟</div>
+        <div style="line-height:2">
+          1️⃣ اذهب إلى <strong style="color:var(--secondary)">aistudio.google.com</strong><br>
+          2️⃣ سجّل بحساب Google<br>
+          3️⃣ اضغط <strong>"Get API Key"</strong> ثم <strong>"Create API Key"</strong><br>
+          4️⃣ انسخ المفتاح والصقه أدناه
+        </div>
+      </div>
+      <div class="section-label">يتبدّل تلقائياً بين المفاتيح عند وصول أي منها لحد الاستهلاك</div>
       <div id="geminiKeys"></div>
       <button class="btn btn-secondary" onclick="addKey('gemini')" style="margin-top:8px">
         ➕ إضافة مفتاح Gemini
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎤 إدارة مفاتيح ElevenLabs</div>
+      <div style="background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.2);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.8">
+        🎙️ اختياري — بدونه يُولَّد اسم ملف الصوت فقط في CSV.<br>
+        🔗 احصل على مفتاح مجاني من <strong style="color:var(--primary)">elevenlabs.io</strong>
+      </div>
+      <div id="elevenKeys"></div>
+      <button class="btn btn-secondary" onclick="addKey('eleven')" style="margin-top:8px">
+        ➕ إضافة مفتاح ElevenLabs
       </button>
     </div>
 
@@ -1266,10 +1270,10 @@
         <div class="flow-node process">
           <span class="flow-node-icon">🧠</span>
           <div class="flow-node-content">
-            <div class="flow-node-title">2. LLM Chain (GPT-4)</div>
+            <div class="flow-node-title">2. LLM Chain (Gemini Flash)</div>
             <div class="flow-node-desc">توليد 5 أسئلة + خيارات + إجابات بصيغة JSON</div>
           </div>
-          <span class="chip chip-teal">OpenAI</span>
+          <span class="chip chip-teal">Gemini</span>
         </div>
         <div class="flow-connector"></div>
         <div class="flow-node tool">
@@ -1285,9 +1289,9 @@
           <span class="flow-node-icon">🎨</span>
           <div class="flow-node-content">
             <div class="flow-node-title">4A. Image Generation Chain</div>
-            <div class="flow-node-desc">GPT-4 → Prompt بيكسار → DALL-E 3 API</div>
+            <div class="flow-node-desc">Gemini Flash → Prompt بيكسار → Imagen 3 API</div>
           </div>
-          <span class="chip chip-orange">DALL-E</span>
+          <span class="chip chip-orange">Imagen 3</span>
         </div>
         <div class="flow-connector"></div>
         <div class="flow-node tool">
@@ -1384,7 +1388,7 @@ const SYSTEM_PROMPT = `
           <div style="width:32px;height:32px;background:var(--purple);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0">3</div>
           <div>
             <div style="font-weight:700">إضافة مفاتيح API</div>
-            <div style="font-size:13px;color:var(--text-muted);margin-top:4px">أدخل مفاتيح OpenAI و ElevenLabs في nodes المقابلة</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-top:4px">أدخل مفاتيح Gemini و ElevenLabs في nodes المقابلة</div>
           </div>
         </div>
         <div style="display:flex;gap:14px;align-items:flex-start">
@@ -1414,9 +1418,8 @@ let deferredPrompt = null;
 
 // API Key pools
 let apiKeys = {
-  openai: [],
-  eleven: [],
-  gemini: []
+  gemini: [],
+  eleven: []
 };
 
 // Load from localStorage
@@ -1521,9 +1524,8 @@ function showToast(msg, type = 'info', icon = '💡') {
 //  API KEY MANAGEMENT
 // ============================================
 function renderKeyUI() {
-  ['openai', 'eleven', 'gemini'].forEach(service => {
-    const containerId = service === 'openai' ? 'openaiKeys' :
-                        service === 'eleven' ? 'elevenKeys' : 'geminiKeys';
+  ['gemini', 'eleven'].forEach(service => {
+    const containerId = service === 'eleven' ? 'elevenKeys' : 'geminiKeys';
     const container = document.getElementById(containerId);
     if (!container) return;
 
@@ -1535,12 +1537,12 @@ function renderKeyUI() {
     container.innerHTML = apiKeys[service].map((k, i) => `
       <div class="api-key-row">
         <div class="key-status ${k.status === 'active' ? 'active' : k.status === 'limit' ? 'limit' : 'inactive'}"></div>
-        <input type="password" value="${k.key}" placeholder="sk-..." 
+        <input type="password" value="${k.key}" placeholder="${service === 'gemini' ? 'AIza...' : 'sk_...'}"
                onchange="updateKey('${service}', ${i}, this.value)" />
         <span class="key-badge badge-${k.status === 'active' ? 'active' : k.status === 'limit' ? 'limit' : 'error'}">
           ${k.status === 'active' ? '✓ نشط' : k.status === 'limit' ? '⚠ محدود' : '✗ خطأ'}
         </span>
-        <button onclick="removeKey('${service}', ${i})" 
+        <button onclick="removeKey('${service}', ${i})"
                 style="background:rgba(231,76,60,0.2);border:1px solid rgba(231,76,60,0.4);color:#E74C3C;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px;white-space:nowrap">
           حذف
         </button>
@@ -1592,41 +1594,64 @@ function handleRateLimit(service, keyValue) {
 }
 
 // ============================================
-//  AI QUESTION GENERATOR
-//  يستخدم OpenAI إذا توفر مفتاح، وإلا يولّد محلياً
+//  AI QUESTION GENERATOR — Google Gemini
 // ============================================
 
-async function callOpenAI(prompt, systemPrompt) {
-  const keyObj = apiKeys.openai.find(k => k.status === 'active');
-  if (!keyObj || !keyObj.key || !keyObj.key.startsWith('sk-')) {
-    throw new Error('NO_KEY');
-  }
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${keyObj.key}`
-    },
+async function callGemini(prompt, systemPrompt) {
+  const keyObj = apiKeys.gemini.find(k => k.status === 'active');
+  if (!keyObj || !keyObj.key) throw new Error('NO_KEY');
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keyObj.key}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
-      max_tokens: 3000,
-      temperature: 0.8,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: prompt }
-      ]
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.8,
+        maxOutputTokens: 4096,
+        responseMimeType: 'application/json'
+      }
     })
   });
+
   if (response.status === 429) {
-    handleRateLimit('openai', keyObj.key);
+    handleRateLimit('gemini', keyObj.key);
     throw new Error('RATE_LIMIT');
   }
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `OpenAI Error ${response.status}`);
+    const msg = err?.error?.message || `Gemini Error ${response.status}`;
+    throw new Error(msg);
   }
   const data = await response.json();
-  return data.choices[0].message.content;
+  return data.candidates[0].content.parts[0].text;
+}
+
+// ── توليد الصورة عبر Imagen 3 ──────────────────
+async function callGeminiImage(prompt) {
+  const keyObj = apiKeys.gemini.find(k => k.status === 'active');
+  if (!keyObj || !keyObj.key) return null;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${keyObj.key}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        instances: [{ prompt }],
+        parameters: { sampleCount: 1, aspectRatio: '1:1', safetyFilterLevel: 'block_few' }
+      })
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    const b64 = data?.predictions?.[0]?.bytesBase64Encoded;
+    if (!b64) return null;
+    return `data:image/png;base64,${b64}`;
+  } catch { return null; }
 }
 
 // ── توليد محلي ذكي بدون API ──────────────────────
@@ -1646,10 +1671,8 @@ function generateLocalQuiz(topic, count, ageGroup) {
     'ألوان': '🎨', 'أرقام': '🔢', 'حروف': '🔤', 'أشكال': '🔷',
     'طبيعة': '🌿', 'جغرافيا': '🌍', 'تاريخ': '📜', 'علوم': '🔬'
   };
-
   const emoji = Object.entries(topicEmojis).find(([k]) => topic.includes(k))?.[1] || '🧠';
 
-  // قوالب أسئلة عامة لكل موضوع
   const questionTemplates = [
     { q: `ما هو الأكبر في موضوع ${topic}؟`, a: 0 },
     { q: `أيٌّ من التالي ينتمي إلى ${topic}؟`, a: 1 },
@@ -1690,36 +1713,33 @@ function generateLocalQuiz(topic, count, ageGroup) {
       question: tmpl.q,
       choices,
       correct,
-      imagePrompt: `${style}, ${topic} themed educational scene for children, question number ${i+1}, white background, high quality render, 4k`,
+      imagePrompt: `${style}, ${topic} themed educational scene for children, question ${i+1}, white background, high quality 4k`,
       audioScript: `سؤال رقم ${i+1}: ${tmpl.q} هل تعرف الإجابة؟`
     };
   });
 
   return {
-    topic,
-    emoji,
-    questions,
+    topic, emoji, questions,
     fullScript: `أهلاً وسهلاً أصدقائي الصغار! 🌟 اليوم عندنا مسابقة رائعة عن موضوع ${topic}! هل أنتم مستعدون؟ لنبدأ!\n\n` +
       questions.map((q, i) => `السؤال ${i+1}: ${q.question}\n`).join('') +
       `\nأحسنتم يا أبطال! كانت هذه مسابقتنا الرائعة عن ${topic}. أراكم في المرة القادمة! 👋🎉`
   };
 }
 
-// ── الدالة الرئيسية للتوليد ───────────────────────
+// ── الدالة الرئيسية للتوليد بـ Gemini ─────────────
 async function generateQuestionsWithClaude(topic, count, ageGroup) {
-  const systemPrompt = `أنت خبير في إنشاء محتوى تعليمي للأطفال.
-يجب أن ترد دائماً بـ JSON نقي فقط بدون أي نص إضافي أو markdown أو backticks.
-الأسئلة يجب أن تكون مناسبة لأطفال عمر ${ageGroup} سنوات.
-تأكد أن الأسئلة متنوعة وممتعة وتعليمية.`;
-
   const imageStyle = document.getElementById('imageStyle')?.value || 'pixar';
   const styleDesc = imageStyle === 'pixar' ? 'Pixar 3D animation style, cute cartoon' :
                     imageStyle === 'cartoon' ? 'flat cartoon 2D illustration' :
                     imageStyle === 'watercolor' ? 'soft watercolor painting' : 'modern flat design';
 
+  const systemPrompt = `أنت خبير في إنشاء محتوى تعليمي للأطفال.
+ترد دائماً بـ JSON نقي فقط — بدون أي نص إضافي أو markdown.
+الأسئلة مناسبة لأطفال عمر ${ageGroup} سنوات، متنوعة وممتعة وتعليمية.`;
+
   const userPrompt = `أنشئ ${count} أسئلة تعليمية ممتعة عن موضوع: "${topic}"
 
-أرجع JSON فقط بهذا الشكل بالضبط:
+أرجع JSON فقط بهذا الشكل:
 {
   "topic": "${topic}",
   "emoji": "رمز تعبيري مناسب",
@@ -1729,30 +1749,29 @@ async function generateQuestionsWithClaude(topic, count, ageGroup) {
       "question": "نص السؤال بالعربية؟",
       "choices": {"a": "خيار أ", "b": "خيار ب", "c": "خيار ج", "d": "خيار د"},
       "correct": "a",
-      "imagePrompt": "${styleDesc}, [scene description in English], bright colors, child-friendly, white background, 4k",
-      "audioScript": "جملة تعليقية قصيرة للسؤال"
+      "imagePrompt": "${styleDesc}, [scene in English], bright colors, child-friendly, white background, 4k",
+      "audioScript": "جملة تعليقية قصيرة ومشوقة للسؤال بالعربية البيضاء"
     }
   ],
-  "fullScript": "سكريبت تعليقي كامل ومشوق"
+  "fullScript": "سكريبت تعليقي كامل ومشوق يشمل مقدمة وخاتمة"
 }`;
 
   try {
-    showToast('جارٍ الاتصال بـ OpenAI...', 'info', '🤖');
-    const raw = await callOpenAI(userPrompt, systemPrompt);
+    showToast('جارٍ الاتصال بـ Gemini 2.0 Flash...', 'info', '🤖');
+    const raw = await callGemini(userPrompt, systemPrompt);
     const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const parsed = JSON.parse(cleaned);
-    showToast('✅ تم التوليد بـ GPT!', 'success', '🤖');
+    showToast('✅ تم التوليد بـ Gemini!', 'success', '🤖');
     return parsed;
   } catch (err) {
     if (err.message === 'NO_KEY') {
-      showToast('لا يوجد مفتاح OpenAI — جارٍ التوليد المحلي التلقائي...', 'warning', '⚙️');
+      showToast('لا يوجد مفتاح Gemini — جارٍ التوليد المحلي...', 'warning', '⚙️');
     } else if (err.message === 'RATE_LIMIT') {
-      showToast('تجاوز حد الاستهلاك — التبديل للتوليد المحلي...', 'warning', '🔄');
+      showToast('تجاوز حد الاستهلاك — التبديل للمفتاح التالي...', 'warning', '🔄');
     } else {
-      showToast(`تعذّر الاتصال بـ OpenAI (${err.message}) — التوليد المحلي...`, 'warning', '⚙️');
+      showToast(`تعذّر الاتصال (${err.message}) — التوليد المحلي...`, 'warning', '⚙️');
     }
-    // Fallback: local generation
-    await new Promise(r => setTimeout(r, 600));
+    await new Promise(r => setTimeout(r, 500));
     return generateLocalQuiz(topic, count, ageGroup);
   }
 }
@@ -1874,45 +1893,28 @@ async function startGeneration() {
 }
 
 // ============================================
-//  IMAGE GENERATION (with OpenAI or mock)
+//  IMAGE GENERATION — Imagen 3 (Gemini)
 // ============================================
 async function generateImages(questions, style) {
   const images = [];
+  const hasGeminiKey = apiKeys.gemini.some(k => k.status === 'active' && k.key);
+
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
-    let pushed = false;
-    // Try OpenAI DALL-E only if valid key exists
-    try {
-      const keyObj = apiKeys.openai.find(k => k.status === 'active');
-      if (keyObj && keyObj.key && keyObj.key.startsWith('sk-')) {
-        const resp = await fetch('https://api.openai.com/v1/images/generations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${keyObj.key}`
-          },
-          body: JSON.stringify({
-            model: 'dall-e-3',
-            prompt: q.imagePrompt,
-            n: 1,
-            size: '1024x1024'
-          })
-        });
-        if (resp.status === 429) handleRateLimit('openai', keyObj.key);
-        else if (resp.ok) {
-          const data = await resp.json();
-          images.push({ questionId: q.id, url: data.data[0].url, filename: `q${q.id}_image.png` });
-          pushed = true;
-        }
-      }
-    } catch(e) { /* network error or no key — use placeholder */ }
-    
-    if (!pushed) {
-      images.push({
-        questionId: q.id, url: null, placeholder: true,
-        filename: `q${q.id}_image.png`, prompt: q.imagePrompt
-      });
+    let imageUrl = null;
+
+    if (hasGeminiKey) {
+      showToast(`🎨 توليد صورة ${i+1}/${questions.length} عبر Imagen 3...`, 'info', '🖼️');
+      imageUrl = await callGeminiImage(q.imagePrompt);
     }
+
+    images.push({
+      questionId: q.id,
+      url: imageUrl,
+      placeholder: !imageUrl,
+      filename: `q${q.id}_image.png`,
+      prompt: q.imagePrompt
+    });
   }
   return images;
 }
@@ -2013,7 +2015,7 @@ function populateResultsTab(project) {
           : `<div class="image-placeholder">
               <span>🎨</span>
               <div>صورة السؤال ${img.questionId}</div>
-              <div style="font-size:10px;margin-top:4px;opacity:0.7">أضف مفتاح DALL-E لتوليد الصورة</div>
+              <div style="font-size:10px;margin-top:4px;opacity:0.7">أضف مفتاح Gemini لتوليد الصورة عبر Imagen 3</div>
             </div>`
         }
         <div class="image-label">${img.filename}</div>
@@ -2330,7 +2332,7 @@ async function init() {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
 
-  showToast('✅ الإصدار 2.0 — يعمل بدون مفاتيح API', 'success', '🧠');
+  showToast('✅ الإصدار 3.0 — Gemini 2.0 Flash جاهز!', 'success', '🧠');
 }
 
 init();
