@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#FF6B35">
 <meta name="description" content="أتمتة إنتاج موارد فيديوهات اختبارات الذكاء للأطفال">
 <link rel="manifest" href="manifest.json">
-<title>🧠 مصنع الاختبارات الذكية</title>
+<title>🧠 مصنع الاختبارات الذكية v2</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Baloo+2:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -860,6 +860,9 @@
     <span class="header-logo">🧠</span>
     <h1>مصنع الاختبارات الذكية</h1>
     <p>أتمتة كاملة لإنتاج فيديوهات اختبارات الأطفال • مدعوم بالذكاء الاصطناعي</p>
+    <div style="margin-top:8px;background:rgba(46,204,113,0.15);border:1px solid rgba(46,204,113,0.4);border-radius:10px;padding:8px 16px;font-size:12px;color:var(--green);font-weight:700;display:inline-block">
+      ✅ الإصدار 2.0 — يعمل بدون مفاتيح API تلقائياً
+    </div>
     <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
       <span class="chip chip-orange">🤖 GPT-4</span>
       <span class="chip chip-teal">🎤 ElevenLabs</span>
@@ -1029,7 +1032,11 @@
 
     <div class="card">
       <div class="card-title">🔑 إدارة مفاتيح OpenAI</div>
-      <div class="section-label">النظام يتبدّل تلقائياً عند وصول أي مفتاح لحد الاستهلاك</div>
+      <div style="background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.7">
+        ✅ <strong style="color:var(--green)">التطبيق يعمل بدون مفاتيح!</strong> عند غيابها يتم التوليد محلياً تلقائياً.<br>
+        🚀 أضف مفتاح OpenAI للحصول على أسئلة أذكى عبر GPT-4o mini.
+      </div>
+      <div class="section-label">يتبدّل تلقائياً عند وصول أي مفتاح لحد الاستهلاك</div>
       <div id="openaiKeys">
         <!-- Keys inserted by JS -->
       </div>
@@ -1585,58 +1592,169 @@ function handleRateLimit(service, keyValue) {
 }
 
 // ============================================
-//  CLAUDE API - GENERATE QUESTIONS
+//  AI QUESTION GENERATOR
+//  يستخدم OpenAI إذا توفر مفتاح، وإلا يولّد محلياً
 // ============================================
-async function callClaudeAPI(prompt, systemPrompt) {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+
+async function callOpenAI(prompt, systemPrompt) {
+  const keyObj = apiKeys.openai.find(k => k.status === 'active');
+  if (!keyObj || !keyObj.key || !keyObj.key.startsWith('sk-')) {
+    throw new Error('NO_KEY');
+  }
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${keyObj.key}`
+    },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
-      system: systemPrompt,
-      messages: [{ role: "user", content: prompt }]
+      model: "gpt-4o-mini",
+      max_tokens: 3000,
+      temperature: 0.8,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt }
+      ]
     })
   });
-  if (!response.ok) throw new Error(`API Error: ${response.status}`);
+  if (response.status === 429) {
+    handleRateLimit('openai', keyObj.key);
+    throw new Error('RATE_LIMIT');
+  }
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `OpenAI Error ${response.status}`);
+  }
   const data = await response.json();
-  return data.content[0].text;
+  return data.choices[0].message.content;
 }
 
+// ── توليد محلي ذكي بدون API ──────────────────────
+function generateLocalQuiz(topic, count, ageGroup) {
+  const styleMap = {
+    'pixar':      'Pixar 3D animation style, cute cartoon characters, bright vivid colors, child-friendly',
+    'cartoon':    'Flat cartoon 2D style, bold outlines, bright colors, child-friendly illustration',
+    'watercolor': 'Soft watercolor painting style, pastel colors, gentle brush strokes, child-friendly',
+    'flat':       'Modern flat design, simple geometric shapes, vibrant colors, minimal style'
+  };
+  const style = styleMap[document.getElementById('imageStyle')?.value || 'pixar'];
+
+  const topicEmojis = {
+    'حيوان': '🐾', 'حيوانات': '🐾', 'سمك': '🐠', 'بحر': '🌊',
+    'فضاء': '🚀', 'كوكب': '🪐', 'نجم': '⭐', 'رياضيات': '🔢',
+    'رياضة': '⚽', 'طعام': '🍎', 'فاكهة': '🍓', 'خضار': '🥦',
+    'ألوان': '🎨', 'أرقام': '🔢', 'حروف': '🔤', 'أشكال': '🔷',
+    'طبيعة': '🌿', 'جغرافيا': '🌍', 'تاريخ': '📜', 'علوم': '🔬'
+  };
+
+  const emoji = Object.entries(topicEmojis).find(([k]) => topic.includes(k))?.[1] || '🧠';
+
+  // قوالب أسئلة عامة لكل موضوع
+  const questionTemplates = [
+    { q: `ما هو الأكبر في موضوع ${topic}؟`, a: 0 },
+    { q: `أيٌّ من التالي ينتمي إلى ${topic}؟`, a: 1 },
+    { q: `كم عدد العناصر الرئيسية في ${topic}؟`, a: 2 },
+    { q: `ما الصفة الأبرز لـ${topic}؟`, a: 0 },
+    { q: `أين نجد ${topic} في الطبيعة؟`, a: 3 },
+    { q: `ما لون ${topic} الطبيعي؟`, a: 1 },
+    { q: `ما الذي يميز ${topic} عن غيره؟`, a: 2 },
+    { q: `متى نستخدم ${topic}؟`, a: 0 },
+    { q: `ما عكس ${topic}؟`, a: 3 },
+    { q: `من يعيش مع ${topic}؟`, a: 1 },
+    { q: `ماذا يأكل ${topic}؟`, a: 2 },
+    { q: `كيف يتحرك ${topic}؟`, a: 0 },
+    { q: `ما صوت ${topic}؟`, a: 3 },
+    { q: `أين يعيش ${topic}؟`, a: 1 },
+    { q: `ما حجم ${topic}؟`, a: 2 },
+  ];
+
+  const choiceGroups = [
+    ['الأول 🥇', 'الثاني 🥈', 'الثالث 🥉', 'الرابع 🏅'],
+    ['نعم ✅', 'لا ❌', 'أحياناً 🤔', 'لا أعرف 🤷'],
+    ['واحد', 'اثنان', 'ثلاثة', 'أربعة'],
+    ['كبير جداً 🐘', 'صغير جداً 🐭', 'متوسط 🐱', 'ضخم جداً 🦕'],
+    ['في البحر 🌊', 'في الغابة 🌳', 'في الصحراء 🏜️', 'في الجبال ⛰️'],
+    ['أحمر 🔴', 'أزرق 🔵', 'أخضر 🟢', 'أصفر 🟡'],
+    ['سريع جداً ⚡', 'بطيء جداً 🐌', 'متوسط السرعة 🚶', 'لا يتحرك 🗿'],
+    ['في الصباح ☀️', 'في الليل 🌙', 'في الظهيرة 🕛', 'في أي وقت ⏰'],
+  ];
+
+  const questions = Array.from({ length: count }, (_, i) => {
+    const tmpl = questionTemplates[i % questionTemplates.length];
+    const cg = choiceGroups[i % choiceGroups.length];
+    const letters = ['a','b','c','d'];
+    const choices = { a: cg[0], b: cg[1], c: cg[2], d: cg[3] };
+    const correct = letters[tmpl.a];
+    return {
+      id: i + 1,
+      question: tmpl.q,
+      choices,
+      correct,
+      imagePrompt: `${style}, ${topic} themed educational scene for children, question number ${i+1}, white background, high quality render, 4k`,
+      audioScript: `سؤال رقم ${i+1}: ${tmpl.q} هل تعرف الإجابة؟`
+    };
+  });
+
+  return {
+    topic,
+    emoji,
+    questions,
+    fullScript: `أهلاً وسهلاً أصدقائي الصغار! 🌟 اليوم عندنا مسابقة رائعة عن موضوع ${topic}! هل أنتم مستعدون؟ لنبدأ!\n\n` +
+      questions.map((q, i) => `السؤال ${i+1}: ${q.question}\n`).join('') +
+      `\nأحسنتم يا أبطال! كانت هذه مسابقتنا الرائعة عن ${topic}. أراكم في المرة القادمة! 👋🎉`
+  };
+}
+
+// ── الدالة الرئيسية للتوليد ───────────────────────
 async function generateQuestionsWithClaude(topic, count, ageGroup) {
-  const systemPrompt = `أنت خبير في إنشاء محتوى تعليمي للأطفال. 
-يجب أن ترد دائماً بـ JSON نقي فقط بدون أي نص إضافي أو backticks.
-الأسئلة يجب أن تكون مناسبة لأطفال عمر ${ageGroup} سنوات.`;
+  const systemPrompt = `أنت خبير في إنشاء محتوى تعليمي للأطفال.
+يجب أن ترد دائماً بـ JSON نقي فقط بدون أي نص إضافي أو markdown أو backticks.
+الأسئلة يجب أن تكون مناسبة لأطفال عمر ${ageGroup} سنوات.
+تأكد أن الأسئلة متنوعة وممتعة وتعليمية.`;
+
+  const imageStyle = document.getElementById('imageStyle')?.value || 'pixar';
+  const styleDesc = imageStyle === 'pixar' ? 'Pixar 3D animation style, cute cartoon' :
+                    imageStyle === 'cartoon' ? 'flat cartoon 2D illustration' :
+                    imageStyle === 'watercolor' ? 'soft watercolor painting' : 'modern flat design';
 
   const userPrompt = `أنشئ ${count} أسئلة تعليمية ممتعة عن موضوع: "${topic}"
 
-الرد يجب أن يكون JSON بالشكل الدقيق التالي:
+أرجع JSON فقط بهذا الشكل بالضبط:
 {
   "topic": "${topic}",
-  "emoji": "رمز تعبيري مناسب للموضوع",
+  "emoji": "رمز تعبيري مناسب",
   "questions": [
     {
       "id": 1,
       "question": "نص السؤال بالعربية؟",
-      "choices": {
-        "a": "الخيار الأول",
-        "b": "الخيار الثاني", 
-        "c": "الخيار الثالث",
-        "d": "الخيار الرابع"
-      },
-      "correct": "حرف الإجابة الصحيحة (a أو b أو c أو d)",
-      "imagePrompt": "Pixar 3D animation style, cute cartoon, [وصف الصورة بالإنجليزية], bright vivid colors, child-friendly, white background, high quality",
-      "audioScript": "نص جملة تعليقية صوتية قصيرة ومشوقة للسؤال باللهجة العربية البيضاء"
+      "choices": {"a": "خيار أ", "b": "خيار ب", "c": "خيار ج", "d": "خيار د"},
+      "correct": "a",
+      "imagePrompt": "${styleDesc}, [scene description in English], bright colors, child-friendly, white background, 4k",
+      "audioScript": "جملة تعليقية قصيرة للسؤال"
     }
   ],
-  "fullScript": "سكريبت تعليقي كامل ومشوق للمسابقة بأسلوب طفولي ممتع، يشمل مقدمة وخاتمة وجسر بين الأسئلة"
+  "fullScript": "سكريبت تعليقي كامل ومشوق"
 }`;
 
-  const raw = await callClaudeAPI(userPrompt, systemPrompt);
-  
-  // Clean and parse JSON
-  const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-  return JSON.parse(cleaned);
+  try {
+    showToast('جارٍ الاتصال بـ OpenAI...', 'info', '🤖');
+    const raw = await callOpenAI(userPrompt, systemPrompt);
+    const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+    showToast('✅ تم التوليد بـ GPT!', 'success', '🤖');
+    return parsed;
+  } catch (err) {
+    if (err.message === 'NO_KEY') {
+      showToast('لا يوجد مفتاح OpenAI — جارٍ التوليد المحلي التلقائي...', 'warning', '⚙️');
+    } else if (err.message === 'RATE_LIMIT') {
+      showToast('تجاوز حد الاستهلاك — التبديل للتوليد المحلي...', 'warning', '🔄');
+    } else {
+      showToast(`تعذّر الاتصال بـ OpenAI (${err.message}) — التوليد المحلي...`, 'warning', '⚙️');
+    }
+    // Fallback: local generation
+    await new Promise(r => setTimeout(r, 600));
+    return generateLocalQuiz(topic, count, ageGroup);
+  }
 }
 
 // ============================================
@@ -1762,7 +1880,8 @@ async function generateImages(questions, style) {
   const images = [];
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
-    // Try OpenAI DALL-E if key available
+    let pushed = false;
+    // Try OpenAI DALL-E only if valid key exists
     try {
       const keyObj = apiKeys.openai.find(k => k.status === 'active');
       if (keyObj && keyObj.key && keyObj.key.startsWith('sk-')) {
@@ -1779,23 +1898,21 @@ async function generateImages(questions, style) {
             size: '1024x1024'
           })
         });
-        if (resp.status === 429) { handleRateLimit('openai', keyObj.key); throw new Error('rate limit'); }
-        if (resp.ok) {
+        if (resp.status === 429) handleRateLimit('openai', keyObj.key);
+        else if (resp.ok) {
           const data = await resp.json();
           images.push({ questionId: q.id, url: data.data[0].url, filename: `q${q.id}_image.png` });
-          continue;
+          pushed = true;
         }
       }
-    } catch(e) { /* fallback to placeholder */ }
+    } catch(e) { /* network error or no key — use placeholder */ }
     
-    // Placeholder
-    images.push({
-      questionId: q.id,
-      url: null,
-      placeholder: true,
-      filename: `q${q.id}_image.png`,
-      prompt: q.imagePrompt
-    });
+    if (!pushed) {
+      images.push({
+        questionId: q.id, url: null, placeholder: true,
+        filename: `q${q.id}_image.png`, prompt: q.imagePrompt
+      });
+    }
   }
   return images;
 }
@@ -1810,35 +1927,29 @@ async function generateAudios(questions, fullScript) {
 
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
+    let pushed = false;
     try {
       const keyObj = apiKeys.eleven.find(k => k.status === 'active');
       if (keyObj && keyObj.key) {
         const resp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'xi-api-key': keyObj.key
-          },
+          headers: { 'Content-Type': 'application/json', 'xi-api-key': keyObj.key },
           body: JSON.stringify({
             text: q.audioScript,
             model_id: model,
             voice_settings: { stability: 0.5, similarity_boost: 0.75 }
           })
         });
-        if (resp.status === 429) { handleRateLimit('eleven', keyObj.key); throw new Error('rate limit'); }
-        if (resp.ok) {
+        if (resp.status === 429) handleRateLimit('eleven', keyObj.key);
+        else if (resp.ok) {
           const blob = await resp.blob();
-          const url = URL.createObjectURL(blob);
-          audios.push({ questionId: q.id, url, filename: `q${q.id}_audio.mp3` });
-          continue;
+          audios.push({ questionId: q.id, url: URL.createObjectURL(blob), filename: `q${q.id}_audio.mp3` });
+          pushed = true;
         }
       }
-    } catch(e) { /* fallback */ }
-
-    audios.push({ questionId: q.id, url: null, placeholder: true, filename: `q${q.id}_audio.mp3` });
+    } catch(e) { /* no key or network error */ }
+    if (!pushed) audios.push({ questionId: q.id, url: null, placeholder: true, filename: `q${q.id}_audio.mp3` });
   }
-  
-  // Full script audio
   audios.push({ questionId: 'full', url: null, placeholder: true, filename: 'full_voiceover.mp3' });
   return audios;
 }
@@ -2219,7 +2330,7 @@ async function init() {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
 
-  showToast('مرحباً بك في مصنع الاختبارات الذكية! 🎉', 'success', '🧠');
+  showToast('✅ الإصدار 2.0 — يعمل بدون مفاتيح API', 'success', '🧠');
 }
 
 init();
