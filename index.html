@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#FF6B35">
 <meta name="description" content="أتمتة إنتاج موارد فيديوهات اختبارات الذكاء للأطفال">
 <link rel="manifest" href="manifest.json">
-<title>🧠 مصنع الاختبارات الذكية v3 — Gemini</title>
+<title>🧠 مصنع الاختبارات الذكية v4 — Gemini</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Baloo+2:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -861,7 +861,7 @@
     <h1>مصنع الاختبارات الذكية</h1>
     <p>أتمتة كاملة لإنتاج فيديوهات اختبارات الأطفال • مدعوم بالذكاء الاصطناعي</p>
     <div style="margin-top:8px;background:rgba(46,204,113,0.15);border:1px solid rgba(46,204,113,0.4);border-radius:10px;padding:8px 16px;font-size:12px;color:var(--green);font-weight:700;display:inline-block">
-      ✅ الإصدار 3.0 — مدعوم بـ Google Gemini
+      ✅ الإصدار 4.0 — توليد حقيقي بـ Gemini فقط
     </div>
     <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
       <span class="chip chip-teal">🤖 Gemini 2.0 Flash</span>
@@ -1032,10 +1032,10 @@
 
     <div class="card" style="border-color:rgba(78,205,196,0.4)">
       <div class="card-title">🔑 إدارة مفاتيح Google Gemini</div>
-      <div style="background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.8">
-        ✅ <strong style="color:var(--green)">التطبيق يعمل بدون مفتاح!</strong> التوليد المحلي يعمل تلقائياً.<br>
-        🚀 أضف مفتاح Gemini للحصول على أسئلة ذكية حقيقية عبر <strong>Gemini 2.0 Flash</strong>.<br>
-        🎨 ويدعم أيضاً توليد الصور عبر <strong>Imagen 3</strong>.
+      <div style="background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.35);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.8">
+        🔑 <strong style="color:var(--primary)">المفتاح إلزامي</strong> — التطبيق يستخدم Gemini الحقيقي فقط.<br>
+        🚀 يدعم <strong>Gemini 2.0 Flash</strong> للأسئلة و<strong>Imagen 3</strong> للصور.<br>
+        🔄 أضف أكثر من مفتاح للتبديل التلقائي عند الوصول لحد الاستهلاك.
       </div>
       <div style="background:rgba(15,52,96,0.6);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px">
         <div style="font-weight:800;color:var(--accent);margin-bottom:8px">📋 كيف تحصل على مفتاح مجاني؟</div>
@@ -1598,36 +1598,47 @@ function handleRateLimit(service, keyValue) {
 // ============================================
 
 async function callGemini(prompt, systemPrompt) {
-  const keyObj = apiKeys.gemini.find(k => k.status === 'active');
-  if (!keyObj || !keyObj.key) throw new Error('NO_KEY');
+  const activeKeys = apiKeys.gemini.filter(k => k.status === 'active' && k.key);
+  if (!activeKeys.length) throw new Error('NO_KEY');
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keyObj.key}`;
+  for (let attempt = 0; attempt < activeKeys.length; attempt++) {
+    const keyObj = activeKeys[attempt];
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keyObj.key}`;
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.8,
-        maxOutputTokens: 4096,
-        responseMimeType: 'application/json'
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.8,
+            maxOutputTokens: 4096,
+            responseMimeType: 'application/json'
+          }
+        })
+      });
+
+      if (response.status === 429) {
+        handleRateLimit('gemini', keyObj.key);
+        showToast(`⚠️ مفتاح ${attempt+1} وصل للحد — التبديل للمفتاح التالي...`, 'warning', '🔄');
+        continue; // try next key
       }
-    })
-  });
 
-  if (response.status === 429) {
-    handleRateLimit('gemini', keyObj.key);
-    throw new Error('RATE_LIMIT');
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `Gemini Error ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.candidates[0].content.parts[0].text;
+
+    } catch (e) {
+      if (e.message.includes('Gemini Error') || attempt === activeKeys.length - 1) throw e;
+    }
   }
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    const msg = err?.error?.message || `Gemini Error ${response.status}`;
-    throw new Error(msg);
-  }
-  const data = await response.json();
-  return data.candidates[0].content.parts[0].text;
+  throw new Error('جميع المفاتيح وصلت لحد الاستهلاك. أضف مفاتيح جديدة أو انتظر قليلاً.');
 }
 
 // ── توليد الصورة عبر Imagen 3 ──────────────────
@@ -1654,80 +1665,13 @@ async function callGeminiImage(prompt) {
   } catch { return null; }
 }
 
-// ── توليد محلي ذكي بدون API ──────────────────────
-function generateLocalQuiz(topic, count, ageGroup) {
-  const styleMap = {
-    'pixar':      'Pixar 3D animation style, cute cartoon characters, bright vivid colors, child-friendly',
-    'cartoon':    'Flat cartoon 2D style, bold outlines, bright colors, child-friendly illustration',
-    'watercolor': 'Soft watercolor painting style, pastel colors, gentle brush strokes, child-friendly',
-    'flat':       'Modern flat design, simple geometric shapes, vibrant colors, minimal style'
-  };
-  const style = styleMap[document.getElementById('imageStyle')?.value || 'pixar'];
-
-  const topicEmojis = {
-    'حيوان': '🐾', 'حيوانات': '🐾', 'سمك': '🐠', 'بحر': '🌊',
-    'فضاء': '🚀', 'كوكب': '🪐', 'نجم': '⭐', 'رياضيات': '🔢',
-    'رياضة': '⚽', 'طعام': '🍎', 'فاكهة': '🍓', 'خضار': '🥦',
-    'ألوان': '🎨', 'أرقام': '🔢', 'حروف': '🔤', 'أشكال': '🔷',
-    'طبيعة': '🌿', 'جغرافيا': '🌍', 'تاريخ': '📜', 'علوم': '🔬'
-  };
-  const emoji = Object.entries(topicEmojis).find(([k]) => topic.includes(k))?.[1] || '🧠';
-
-  const questionTemplates = [
-    { q: `ما هو الأكبر في موضوع ${topic}؟`, a: 0 },
-    { q: `أيٌّ من التالي ينتمي إلى ${topic}؟`, a: 1 },
-    { q: `كم عدد العناصر الرئيسية في ${topic}؟`, a: 2 },
-    { q: `ما الصفة الأبرز لـ${topic}؟`, a: 0 },
-    { q: `أين نجد ${topic} في الطبيعة؟`, a: 3 },
-    { q: `ما لون ${topic} الطبيعي؟`, a: 1 },
-    { q: `ما الذي يميز ${topic} عن غيره؟`, a: 2 },
-    { q: `متى نستخدم ${topic}؟`, a: 0 },
-    { q: `ما عكس ${topic}؟`, a: 3 },
-    { q: `من يعيش مع ${topic}؟`, a: 1 },
-    { q: `ماذا يأكل ${topic}؟`, a: 2 },
-    { q: `كيف يتحرك ${topic}؟`, a: 0 },
-    { q: `ما صوت ${topic}؟`, a: 3 },
-    { q: `أين يعيش ${topic}؟`, a: 1 },
-    { q: `ما حجم ${topic}؟`, a: 2 },
-  ];
-
-  const choiceGroups = [
-    ['الأول 🥇', 'الثاني 🥈', 'الثالث 🥉', 'الرابع 🏅'],
-    ['نعم ✅', 'لا ❌', 'أحياناً 🤔', 'لا أعرف 🤷'],
-    ['واحد', 'اثنان', 'ثلاثة', 'أربعة'],
-    ['كبير جداً 🐘', 'صغير جداً 🐭', 'متوسط 🐱', 'ضخم جداً 🦕'],
-    ['في البحر 🌊', 'في الغابة 🌳', 'في الصحراء 🏜️', 'في الجبال ⛰️'],
-    ['أحمر 🔴', 'أزرق 🔵', 'أخضر 🟢', 'أصفر 🟡'],
-    ['سريع جداً ⚡', 'بطيء جداً 🐌', 'متوسط السرعة 🚶', 'لا يتحرك 🗿'],
-    ['في الصباح ☀️', 'في الليل 🌙', 'في الظهيرة 🕛', 'في أي وقت ⏰'],
-  ];
-
-  const questions = Array.from({ length: count }, (_, i) => {
-    const tmpl = questionTemplates[i % questionTemplates.length];
-    const cg = choiceGroups[i % choiceGroups.length];
-    const letters = ['a','b','c','d'];
-    const choices = { a: cg[0], b: cg[1], c: cg[2], d: cg[3] };
-    const correct = letters[tmpl.a];
-    return {
-      id: i + 1,
-      question: tmpl.q,
-      choices,
-      correct,
-      imagePrompt: `${style}, ${topic} themed educational scene for children, question ${i+1}, white background, high quality 4k`,
-      audioScript: `سؤال رقم ${i+1}: ${tmpl.q} هل تعرف الإجابة؟`
-    };
-  });
-
-  return {
-    topic, emoji, questions,
-    fullScript: `أهلاً وسهلاً أصدقائي الصغار! 🌟 اليوم عندنا مسابقة رائعة عن موضوع ${topic}! هل أنتم مستعدون؟ لنبدأ!\n\n` +
-      questions.map((q, i) => `السؤال ${i+1}: ${q.question}\n`).join('') +
-      `\nأحسنتم يا أبطال! كانت هذه مسابقتنا الرائعة عن ${topic}. أراكم في المرة القادمة! 👋🎉`
-  };
-}
-
 // ── الدالة الرئيسية للتوليد بـ Gemini ─────────────
 async function generateQuestionsWithClaude(topic, count, ageGroup) {
+  const keyObj = apiKeys.gemini.find(k => k.status === 'active');
+  if (!keyObj || !keyObj.key) {
+    throw new Error('❌ لا يوجد مفتاح Gemini! أضف مفتاحك من تبويب "إدارة المفاتيح" للمتابعة.');
+  }
+
   const imageStyle = document.getElementById('imageStyle')?.value || 'pixar';
   const styleDesc = imageStyle === 'pixar' ? 'Pixar 3D animation style, cute cartoon' :
                     imageStyle === 'cartoon' ? 'flat cartoon 2D illustration' :
@@ -1737,7 +1681,7 @@ async function generateQuestionsWithClaude(topic, count, ageGroup) {
 ترد دائماً بـ JSON نقي فقط — بدون أي نص إضافي أو markdown.
 الأسئلة مناسبة لأطفال عمر ${ageGroup} سنوات، متنوعة وممتعة وتعليمية.`;
 
-  const userPrompt = `أنشئ ${count} أسئلة تعليمية ممتعة عن موضوع: "${topic}"
+  const userPrompt = `أنشئ ${count} أسئلة تعليمية ممتعة ومتنوعة عن موضوع: "${topic}"
 
 أرجع JSON فقط بهذا الشكل:
 {
@@ -1756,24 +1700,12 @@ async function generateQuestionsWithClaude(topic, count, ageGroup) {
   "fullScript": "سكريبت تعليقي كامل ومشوق يشمل مقدمة وخاتمة"
 }`;
 
-  try {
-    showToast('جارٍ الاتصال بـ Gemini 2.0 Flash...', 'info', '🤖');
-    const raw = await callGemini(userPrompt, systemPrompt);
-    const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const parsed = JSON.parse(cleaned);
-    showToast('✅ تم التوليد بـ Gemini!', 'success', '🤖');
-    return parsed;
-  } catch (err) {
-    if (err.message === 'NO_KEY') {
-      showToast('لا يوجد مفتاح Gemini — جارٍ التوليد المحلي...', 'warning', '⚙️');
-    } else if (err.message === 'RATE_LIMIT') {
-      showToast('تجاوز حد الاستهلاك — التبديل للمفتاح التالي...', 'warning', '🔄');
-    } else {
-      showToast(`تعذّر الاتصال (${err.message}) — التوليد المحلي...`, 'warning', '⚙️');
-    }
-    await new Promise(r => setTimeout(r, 500));
-    return generateLocalQuiz(topic, count, ageGroup);
-  }
+  showToast('جارٍ الاتصال بـ Gemini 2.0 Flash...', 'info', '🤖');
+  const raw = await callGemini(userPrompt, systemPrompt);
+  const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const parsed = JSON.parse(cleaned);
+  showToast('✅ تم التوليد بـ Gemini!', 'success', '🤖');
+  return parsed;
 }
 
 // ============================================
@@ -2332,7 +2264,7 @@ async function init() {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
 
-  showToast('✅ الإصدار 3.0 — Gemini 2.0 Flash جاهز!', 'success', '🧠');
+  showToast('الإصدار 4.0 — أضف مفتاح Gemini وابدأ!', 'info', '🔑');
 }
 
 init();
